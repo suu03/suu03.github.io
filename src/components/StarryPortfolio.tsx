@@ -1,8 +1,9 @@
-import { useRef, useState, useMemo } from "react";
+import { useRef, useState, useMemo, useEffect } from "react";
 import { Canvas, useFrame, ThreeElements, extend } from "@react-three/fiber";
 import { OrbitControls, Text, shaderMaterial } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
+import { motion, AnimatePresence } from "framer-motion";
 
 const GlowMaterial = shaderMaterial(
   { color: new THREE.Color(1, 1, 1) },
@@ -223,7 +224,13 @@ function Modal({
   activeSection: string;
   setActiveSection: (section: string) => void;
 }) {
-  if (!activeSection) return null;
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    if (activeSection) {
+      setIsVisible(true);
+    }
+  }, [activeSection]);
 
   const content = {
     About:
@@ -233,25 +240,46 @@ function Modal({
     Donate: "Donate me!",
   };
 
+  const handleClose = () => {
+    setIsVisible(false);
+    setTimeout(() => setActiveSection(""), 300); // Delay to allow exit animation
+  };
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-10">
-      <div className="bg-white bg-opacity-80 h-80 w-full p-8 text-slate-800 rounded-lg max-w-2xl flex flex-col justify-between">
-        <h2 className="text-4xl font-bold mb-4 text-cyan-500">
-          {activeSection}
-        </h2>
-        <p className="whitespace-pre-line">
-          {content[activeSection as keyof typeof content]}
-        </p>
-        <div className="flex justify-center mt-6">
-          <button
-            className="text-slate-300 hover:text-slate-500 hover:transition-all hover:duration-500"
-            onClick={() => setActiveSection("")}
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+          className="fixed inset-0 flex items-center justify-center z-10"
+        >
+          <motion.div
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 3 }}
+            exit={{ y: 50, opacity: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="bg-white bg-opacity-80 backdrop-blur-md w-full max-w-2xl p-8 rounded-lg shadow-2xl"
           >
-            Close
-          </button>
-        </div>
-      </div>
-    </div>
+            <h2 className="text-4xl font-bold mb-6 text-cyan-500 border-b pb-2">
+              {activeSection}
+            </h2>
+            <p className="whitespace-pre-line text-lg text-slate-700 mb-6">
+              {content[activeSection as keyof typeof content]}
+            </p>
+            <div className="flex justify-end">
+              <button
+                className="px-4 py-2 text-slate-800 hover:text-cyan-500 transition-colors duration-300"
+                onClick={handleClose}
+              >
+                Close
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
