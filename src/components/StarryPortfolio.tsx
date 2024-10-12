@@ -77,7 +77,11 @@ function HoverableText({
 }
 
 function Box(
-  props: ThreeElements["mesh"] & { setActiveSection: (section: string) => void }
+  props: ThreeElements["mesh"] & {
+    setActiveSection: (section: string) => void;
+    triggerMeteor: () => void;
+    meteorActive: boolean;
+  }
 ) {
   const meshRef = useRef<THREE.Mesh>(null!);
   const glowRef = useRef<THREE.Mesh>(null!);
@@ -155,16 +159,33 @@ function Box(
           Contact
         </HoverableText>
         <HoverableText
-          position={[-boxSize / 2 - 0.5, 0, 0]}
+          position={[0, 0, -boxSize / 2 - 0.5]}
           fontSize={0.7}
           color="black"
-          hoverColor="#3068A8"
+          hoverColor="#1F80FF"
           anchorX="center"
           anchorY="middle"
-          rotation={[0, -Math.PI / 2, 0]}
-          onClick={() => props.setActiveSection("")}
+          rotation={[0, Math.PI, 0]}
+          onClick={() => {
+            if (!props.meteorActive) {
+              props.triggerMeteor();
+              props.setActiveSection("");
+            }
+          }}
         >
           Make a Wish!
+        </HoverableText>
+        <HoverableText
+          position={[boxSize / 2 + 0.5, 0, 0]}
+          fontSize={0.9}
+          color="black"
+          hoverColor="#0056EB"
+          anchorX="center"
+          anchorY="middle"
+          rotation={[0, Math.PI / 2, 0]}
+          onClick={() => props.setActiveSection("Github")}
+        >
+          Github
         </HoverableText>
         <HoverableText
           position={[0, -boxSize / 2 - 0.5, 0]}
@@ -179,13 +200,13 @@ function Box(
           Donate me!
         </HoverableText>
         <HoverableText
-          position={[0, 0, -boxSize / 2 - 0.5]}
+          position={[-boxSize / 2 - 0.5, 0, 0]}
           fontSize={0.9}
-          color="black"
-          hoverColor="#1F80FF"
+          color={props.meteorActive ? "gray" : "black"}
+          hoverColor={props.meteorActive ? "gray" : "#3068A8"}
           anchorX="center"
           anchorY="middle"
-          rotation={[0, Math.PI, 0]}
+          rotation={[0, -Math.PI / 2, 0]}
           onClick={() => props.setActiveSection("About")}
         >
           About
@@ -228,6 +249,77 @@ function Stars() {
       <pointsMaterial size={0.1} color="white" sizeAttenuation />
     </points>
   );
+}
+
+function Meteor({ active }: { active: boolean }) {
+  const meteorRef = useRef<THREE.Mesh>(null!);
+  const [position, setPosition] = useState(
+    () => new THREE.Vector3(50, 25, -10)
+  );
+  const [trail, setTrail] = useState<THREE.Vector3[]>([]);
+  const [heat, setHeat] = useState(0);
+
+  useEffect(() => {
+    if (!active) {
+      setPosition(new THREE.Vector3(50, 25, -10));
+      setTrail([]);
+      setHeat(0);
+    }
+  }, [active]);
+
+  useFrame((_, delta) => {
+    if (active && meteorRef.current) {
+      meteorRef.current.position.x -= delta * 30;
+      meteorRef.current.position.y -= delta * 15;
+
+      // Simulate heating up
+      setHeat(Math.min(1, heat + delta * 20));
+
+      setTrail((prevTrail) => {
+        const newTrail = [...prevTrail, meteorRef.current.position.clone()];
+        if (newTrail.length > 30) {
+          newTrail.shift();
+        }
+        return newTrail;
+      });
+    }
+  });
+
+  return active ? (
+    <group>
+      <mesh ref={meteorRef} position={position}>
+        <sphereGeometry args={[0.3, 32, 32]} />
+        <meshStandardMaterial
+          color={new THREE.Color(1, 1 - heat, 1 - heat)}
+          emissive={new THREE.Color(1, 0.6, 0)}
+          emissiveIntensity={heat * 2}
+        />
+      </mesh>
+      <pointLight
+        position={meteorRef.current ? meteorRef.current.position : [0, 0, 0]}
+        intensity={2 * heat}
+        distance={10}
+        color="#FFA500"
+      />
+      {trail
+        .slice()
+        .reverse()
+        .map((pos, index) => (
+          <mesh key={index} position={pos}>
+            <sphereGeometry
+              args={[0.4 * Math.pow(1 - index / trail.length, 2), 16, 16]}
+            />
+            <meshStandardMaterial
+              color="#FFFFFF"
+              transparent
+              opacity={0.8 * (1 - index / trail.length)}
+              emissive="#CF0808"
+              emissiveIntensity={0.5 * (1 - index / trail.length)}
+            />
+          </mesh>
+        ))}
+    </group>
+  ) : null;
 }
 
 function Modal({
@@ -380,6 +472,14 @@ function Modal({
 
 export default function StarryPortfolio() {
   const [activeSection, setActiveSection] = useState("");
+  const [meteorActive, setMeteorActive] = useState(false);
+
+  const triggerMeteor = () => {
+    if (!meteorActive) {
+      setMeteorActive(true);
+      setTimeout(() => setMeteorActive(false), 5000);
+    }
+  };
 
   return (
     <div className="w-full h-screen">
@@ -387,8 +487,14 @@ export default function StarryPortfolio() {
         <color attach="background" args={["black"]} />
         <ambientLight intensity={0.5} />
         <pointLight position={[10, 10, 10]} />
-        <Box position={[0, 0, 0]} setActiveSection={setActiveSection} />
+        <Box
+          position={[0, 0, 0]}
+          setActiveSection={setActiveSection}
+          triggerMeteor={triggerMeteor}
+          meteorActive={meteorActive}
+        />
         <Stars />
+        <Meteor active={meteorActive} />
         <OrbitControls enableZoom={false} />
         <EffectComposer>
           <Bloom luminanceThreshold={0} luminanceSmoothing={0.9} height={300} />
