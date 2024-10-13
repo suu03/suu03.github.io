@@ -159,13 +159,13 @@ function Box(
           Contact
         </HoverableText>
         <HoverableText
-          position={[0, 0, -boxSize / 2 - 0.5]}
+          position={[-boxSize / 2 - 0.5, 0, 0]}
           fontSize={0.7}
-          color="black"
-          hoverColor="#1F80FF"
+          color={props.meteorActive ? "gray" : "black"}
+          hoverColor={props.meteorActive ? "gray" : "#3068A8"}
           anchorX="center"
           anchorY="middle"
-          rotation={[0, Math.PI, 0]}
+          rotation={[0, -Math.PI / 2, 0]}
           onClick={() => {
             if (!props.meteorActive) {
               props.triggerMeteor();
@@ -174,18 +174,6 @@ function Box(
           }}
         >
           Make a Wish!
-        </HoverableText>
-        <HoverableText
-          position={[boxSize / 2 + 0.5, 0, 0]}
-          fontSize={0.9}
-          color="black"
-          hoverColor="#0056EB"
-          anchorX="center"
-          anchorY="middle"
-          rotation={[0, Math.PI / 2, 0]}
-          onClick={() => props.setActiveSection("Github")}
-        >
-          Github
         </HoverableText>
         <HoverableText
           position={[0, -boxSize / 2 - 0.5, 0]}
@@ -200,13 +188,13 @@ function Box(
           Donate me!
         </HoverableText>
         <HoverableText
-          position={[-boxSize / 2 - 0.5, 0, 0]}
+          position={[0, 0, -boxSize / 2 - 0.5]}
           fontSize={0.9}
-          color={props.meteorActive ? "gray" : "black"}
-          hoverColor={props.meteorActive ? "gray" : "#3068A8"}
+          color="black"
+          hoverColor="#1F80FF"
           anchorX="center"
           anchorY="middle"
-          rotation={[0, -Math.PI / 2, 0]}
+          rotation={[0, Math.PI, 0]}
           onClick={() => props.setActiveSection("About")}
         >
           About
@@ -214,6 +202,7 @@ function Box(
       </mesh>
       <mesh ref={glowRef} scale={1.2}>
         <boxGeometry args={[boxSize, boxSize, boxSize]} />
+        {/* <glowMaterial attach="material" color="#ffffff" /> */}
       </mesh>
     </group>
   );
@@ -222,18 +211,35 @@ function Box(
 function Stars() {
   const starsRef = useRef<THREE.Points>(null!);
   const [starPositions] = useState(() => {
-    const positions = new Float32Array(5000 * 3);
-    for (let i = 0; i < 5000; i++) {
+    const positions = new Float32Array(10000 * 3);
+    const colors = new Float32Array(10000 * 3);
+    const sizes = new Float32Array(10000);
+    for (let i = 0; i < 10000; i++) {
       positions[i * 3] = (Math.random() - 0.5) * 100;
       positions[i * 3 + 1] = (Math.random() - 0.5) * 100;
       positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
+
+      const color = new THREE.Color();
+      color.setHSL(Math.random(), 0.7, 0.9);
+      colors[i * 3] = color.r;
+      colors[i * 3 + 1] = color.g;
+      colors[i * 3 + 2] = color.b;
+
+      sizes[i] = Math.random() * 0.5 + 0.1;
     }
-    return positions;
+    return { positions, colors, sizes };
   });
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     starsRef.current.rotation.x += delta * 0.01;
     starsRef.current.rotation.y += delta * 0.01;
+
+    const time = state.clock.getElapsedTime();
+    const sizes = starsRef.current.geometry.attributes.size.array;
+    for (let i = 0; i < sizes.length; i++) {
+      sizes[i] = Math.sin(time + i * 100) * 0.2 + 0.3;
+    }
+    starsRef.current.geometry.attributes.size.needsUpdate = true;
   });
 
   return (
@@ -241,12 +247,30 @@ function Stars() {
       <bufferGeometry>
         <bufferAttribute
           attach="attributes-position"
-          count={starPositions.length / 3}
-          array={starPositions}
+          count={starPositions.positions.length / 3}
+          array={starPositions.positions}
           itemSize={3}
         />
+        <bufferAttribute
+          attach="attributes-color"
+          count={starPositions.colors.length / 3}
+          array={starPositions.colors}
+          itemSize={3}
+        />
+        <bufferAttribute
+          attach="attributes-size"
+          count={starPositions.sizes.length}
+          array={starPositions.sizes}
+          itemSize={1}
+        />
       </bufferGeometry>
-      <pointsMaterial size={0.1} color="white" sizeAttenuation />
+      <pointsMaterial
+        size={0.1}
+        vertexColors
+        transparent
+        blending={THREE.AdditiveBlending}
+        sizeAttenuation
+      />
     </points>
   );
 }
@@ -273,7 +297,7 @@ function Meteor({ active }: { active: boolean }) {
       meteorRef.current.position.y -= delta * 15;
 
       // Simulate heating up
-      setHeat(Math.min(1, heat + delta * 20));
+      setHeat(Math.min(1, heat + delta * 2));
 
       setTrail((prevTrail) => {
         const newTrail = [...prevTrail, meteorRef.current.position.clone()];
@@ -310,14 +334,22 @@ function Meteor({ active }: { active: boolean }) {
               args={[0.4 * Math.pow(1 - index / trail.length, 2), 16, 16]}
             />
             <meshStandardMaterial
-              color="#FFFFFF"
+              color="#FFA500"
               transparent
               opacity={0.8 * (1 - index / trail.length)}
-              emissive="#CF0808"
-              emissiveIntensity={0.5 * (1 - index / trail.length)}
+              emissive="#FFA500"
+              emissiveIntensity={1.5 * (1 - index / trail.length) * heat}
             />
           </mesh>
         ))}
+      <EffectComposer>
+        <Bloom
+          intensity={1.5}
+          luminanceThreshold={0.1}
+          luminanceSmoothing={0.9}
+          height={300}
+        />
+      </EffectComposer>
     </group>
   ) : null;
 }
