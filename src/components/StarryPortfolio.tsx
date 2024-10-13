@@ -124,7 +124,7 @@ function Box(
           />
         ))}
         <HoverableText
-          position={[0, 0, boxSize / 2 + 0.5]}
+          position={[0, 0, boxSize / 2.05 + 0.5]}
           fontSize={0.7}
           color="#00BDCE"
           hoverColor="#00BDCE"
@@ -135,7 +135,7 @@ function Box(
           Suu portfolio
         </HoverableText>
         <HoverableText
-          position={[boxSize / 2 + 0.5, 0, 0]}
+          position={[boxSize / 2.05 + 0.5, 0, 0]}
           fontSize={0.9}
           color="black"
           hoverColor="#0056EB"
@@ -147,7 +147,7 @@ function Box(
           Github
         </HoverableText>
         <HoverableText
-          position={[0, boxSize / 2 + 0.5, 0]}
+          position={[0, boxSize / 2.05 + 0.5, 0]}
           fontSize={0.9}
           color="black"
           hoverColor="#146C8D"
@@ -159,13 +159,13 @@ function Box(
           Contact
         </HoverableText>
         <HoverableText
-          position={[-boxSize / 2 - 0.5, 0, 0]}
+          position={[0, 0, -boxSize / 2.05 - 0.5]}
           fontSize={0.7}
           color={props.meteorActive ? "gray" : "black"}
           hoverColor={props.meteorActive ? "gray" : "#3068A8"}
           anchorX="center"
           anchorY="middle"
-          rotation={[0, -Math.PI / 2, 0]}
+          rotation={[0, Math.PI, 0]}
           onClick={() => {
             if (!props.meteorActive) {
               props.triggerMeteor();
@@ -176,7 +176,19 @@ function Box(
           Make a Wish!
         </HoverableText>
         <HoverableText
-          position={[0, -boxSize / 2 - 0.5, 0]}
+          position={[boxSize / 2.05 + 0.5, 0, 0]}
+          fontSize={0.9}
+          color="black"
+          hoverColor="#0056EB"
+          anchorX="center"
+          anchorY="middle"
+          rotation={[0, Math.PI / 2, 0]}
+          onClick={() => props.setActiveSection("Github")}
+        >
+          Github
+        </HoverableText>
+        <HoverableText
+          position={[0, -boxSize / 2.05 - 0.5, 0]}
           fontSize={0.7}
           color="black"
           hoverColor="#3567BF"
@@ -188,13 +200,13 @@ function Box(
           Donate me!
         </HoverableText>
         <HoverableText
-          position={[0, 0, -boxSize / 2 - 0.5]}
+          position={[-boxSize / 2.05 - 0.5, 0, 0]}
           fontSize={0.9}
           color="black"
           hoverColor="#1F80FF"
           anchorX="center"
           anchorY="middle"
-          rotation={[0, Math.PI, 0]}
+          rotation={[0, -Math.PI / 2, 0]}
           onClick={() => props.setActiveSection("About")}
         >
           About
@@ -202,7 +214,6 @@ function Box(
       </mesh>
       <mesh ref={glowRef} scale={1.2}>
         <boxGeometry args={[boxSize, boxSize, boxSize]} />
-        {/* <glowMaterial attach="material" color="#ffffff" /> */}
       </mesh>
     </group>
   );
@@ -274,7 +285,6 @@ function Stars() {
     </points>
   );
 }
-
 function Meteor({ active }: { active: boolean }) {
   const meteorRef = useRef<THREE.Mesh>(null!);
   const [position, setPosition] = useState(
@@ -297,7 +307,7 @@ function Meteor({ active }: { active: boolean }) {
       meteorRef.current.position.y -= delta * 15;
 
       // Simulate heating up
-      setHeat(Math.min(1, heat + delta * 2));
+      setHeat(Math.min(1, heat + delta * 20));
 
       setTrail((prevTrail) => {
         const newTrail = [...prevTrail, meteorRef.current.position.clone()];
@@ -334,22 +344,14 @@ function Meteor({ active }: { active: boolean }) {
               args={[0.4 * Math.pow(1 - index / trail.length, 2), 16, 16]}
             />
             <meshStandardMaterial
-              color="#FFA500"
+              color="#FFFFFF"
               transparent
               opacity={0.8 * (1 - index / trail.length)}
-              emissive="#FFA500"
-              emissiveIntensity={1.5 * (1 - index / trail.length) * heat}
+              emissive="#CF0808"
+              emissiveIntensity={0.5 * (1 - index / trail.length)}
             />
           </mesh>
         ))}
-      <EffectComposer>
-        <Bloom
-          intensity={1.5}
-          luminanceThreshold={0.1}
-          luminanceSmoothing={0.9}
-          height={300}
-        />
-      </EffectComposer>
     </group>
   ) : null;
 }
