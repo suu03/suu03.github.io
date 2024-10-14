@@ -124,10 +124,10 @@ function Box(
           />
         ))}
         <HoverableText
-          position={[0, 0, boxSize / 2.05 + 0.5]}
+          position={[0, 0, boxSize / 2.0 + 0.6]}
           fontSize={0.7}
-          color="#00BDCE"
-          hoverColor="#00BDCE"
+          color="#00AEE1"
+          hoverColor="#00AEE1"
           anchorX="center"
           anchorY="middle"
           onClick={() => props.setActiveSection("")}
@@ -135,7 +135,7 @@ function Box(
           Suu portfolio
         </HoverableText>
         <HoverableText
-          position={[boxSize / 2.05 + 0.5, 0, 0]}
+          position={[boxSize / 2.0 + 0.5, 0, 0]}
           fontSize={0.9}
           color="black"
           hoverColor="#0056EB"
@@ -147,7 +147,7 @@ function Box(
           Github
         </HoverableText>
         <HoverableText
-          position={[0, boxSize / 2.05 + 0.5, 0]}
+          position={[0, boxSize / 2.0 + 0.5, 0]}
           fontSize={0.9}
           color="black"
           hoverColor="#146C8D"
@@ -159,7 +159,7 @@ function Box(
           Contact
         </HoverableText>
         <HoverableText
-          position={[0, 0, -boxSize / 2.05 - 0.5]}
+          position={[0, 0, -boxSize / 2.0 - 0.6]}
           fontSize={0.7}
           color={props.meteorActive ? "gray" : "black"}
           hoverColor={props.meteorActive ? "gray" : "#3068A8"}
@@ -176,7 +176,7 @@ function Box(
           Make a Wish!
         </HoverableText>
         <HoverableText
-          position={[boxSize / 2.05 + 0.5, 0, 0]}
+          position={[boxSize / 2.0 + 0.5, 0, 0]}
           fontSize={0.9}
           color="black"
           hoverColor="#0056EB"
@@ -188,7 +188,7 @@ function Box(
           Github
         </HoverableText>
         <HoverableText
-          position={[0, -boxSize / 2.05 - 0.5, 0]}
+          position={[0, -boxSize / 2.1 - 0.6, 0]}
           fontSize={0.7}
           color="black"
           hoverColor="#3567BF"
@@ -200,7 +200,7 @@ function Box(
           Donate me!
         </HoverableText>
         <HoverableText
-          position={[-boxSize / 2.05 - 0.5, 0, 0]}
+          position={[-boxSize / 2.1 - 0.6, 0, 0]}
           fontSize={0.9}
           color="black"
           hoverColor="#1F80FF"
@@ -424,7 +424,7 @@ function Modal({
         >
           <motion.div
             initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 3 }}
+            animate={{ y: 0, opacity: 1 }}
             exit={{ y: 50, opacity: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
             className="bg-white bg-opacity-80 backdrop-blur-md w-full max-w-2xl p-8 rounded-lg shadow-2xl"
@@ -452,9 +452,18 @@ function Modal({
                 />
               </button>
             </div>
-            <p className="whitespace-pre-line text-lg text-slate-700 mb-6">
-              {content[activeSection as keyof typeof content][language]}
-            </p>
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={language}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="whitespace-pre-line text-lg text-slate-700 mb-6"
+              >
+                {content[activeSection as keyof typeof content][language]}
+              </motion.p>
+            </AnimatePresence>
             {activeSection === "Contact" && (
               <div className="flex justify-center mb-6">
                 <button
