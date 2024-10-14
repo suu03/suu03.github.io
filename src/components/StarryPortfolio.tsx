@@ -241,6 +241,19 @@ function Stars() {
     return { positions, colors, sizes };
   });
 
+  const starTexture = useMemo(() => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 32;
+    canvas.height = 32;
+    const ctx = canvas.getContext("2d")!;
+    const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+    gradient.addColorStop(0, "rgba(255,255,255,1)");
+    gradient.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 32, 32);
+    return new THREE.CanvasTexture(canvas);
+  }, []);
+
   useFrame((state, delta) => {
     starsRef.current.rotation.x += delta * 0.01;
     starsRef.current.rotation.y += delta * 0.01;
@@ -281,10 +294,12 @@ function Stars() {
         transparent
         blending={THREE.AdditiveBlending}
         sizeAttenuation
+        map={starTexture}
       />
     </points>
   );
 }
+
 function Meteor({ active }: { active: boolean }) {
   const meteorRef = useRef<THREE.Mesh>(null!);
   const [position, setPosition] = useState(
