@@ -18,33 +18,33 @@
 //   response.send("Hello from Firebase!");
 // });
 
-import * as functions from "firebase-functions";
-import * as admin from "firebase-admin";
-import Stripe from "stripe";
+// import * as functions from "firebase-functions";
+// import * as admin from "firebase-admin";
+// import Stripe from "stripe";
 
-admin.initializeApp();
+// admin.initializeApp();
 
-const stripe = new Stripe(functions.config().stripe.secret, {
-  apiVersion: "2023-08-16",
-});
+// const stripe = new Stripe(functions.config().stripe.secret, {
+//   apiVersion: "2023-08-16",
+// });
 
-export const createPaymentIntent = functions.https.onCall(
-  async (data, context) => {
-    const { amount } = data;
+// export const createPaymentIntent = functions.https.onCall(
+//   async (data, context) => {
+//     const { amount } = data;
 
-    try {
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: amount * 100, // Stripe expects amount in cents
-        currency: "usd",
-      });
+//     try {
+//       const paymentIntent = await stripe.paymentIntents.create({
+//         amount: amount * 100, // Stripe expects amount in cents
+//         currency: "usd",
+//       });
 
-      return { clientSecret: paymentIntent.client_secret };
-    } catch (error) {
-      console.error("Error creating PaymentIntent:", error);
-      throw new functions.https.HttpsError(
-        "internal",
-        "Unable to create PaymentIntent"
-      );
-    }
-  }
-);
+//       return { clientSecret: paymentIntent.client_secret };
+//     } catch (error) {
+//       console.error("Error creating PaymentIntent:", error);
+//       throw new functions.https.HttpsError(
+//         "internal",
+//         "Unable to create PaymentIntent"
+//       );
+//     }
+//   }
+// );
