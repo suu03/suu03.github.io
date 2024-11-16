@@ -4,6 +4,7 @@ import { OrbitControls, Text, shaderMaterial } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { motion, AnimatePresence } from "framer-motion";
+import { loadStripe } from "@stripe/stripe-js";
 
 const GlowMaterial = shaderMaterial(
   { color: new THREE.Color(1, 1, 1) },
@@ -176,18 +177,6 @@ function Box(
           Make a Wish!
         </HoverableText>
         <HoverableText
-          position={[boxSize / 2.0 + 0.5, 0, 0]}
-          fontSize={0.9}
-          color="black"
-          hoverColor="#0056EB"
-          anchorX="center"
-          anchorY="middle"
-          rotation={[0, Math.PI / 2, 0]}
-          onClick={() => props.setActiveSection("Github")}
-        >
-          Github
-        </HoverableText>
-        <HoverableText
           position={[0, -boxSize / 2.1 - 0.6, 0]}
           fontSize={0.7}
           color="black"
@@ -214,6 +203,7 @@ function Box(
       </mesh>
       <mesh ref={glowRef} scale={1.2}>
         <boxGeometry args={[boxSize, boxSize, boxSize]} />
+        {/* <glowMaterial attach="material" color="#ffffff" /> */}
       </mesh>
     </group>
   );
@@ -380,6 +370,7 @@ function Modal({
 }) {
   const [isVisible, setIsVisible] = useState(false);
   const [language, setLanguage] = useState<"en" | "jp">("en");
+  //const [showDonateModal, setShowDonateModal] = useState(false);
 
   useEffect(() => {
     if (activeSection) {
@@ -423,108 +414,141 @@ function Modal({
     window.open("https://github.com/suu03", "_blank");
   };
 
-  const handleDonation = () => {
-    window.open("https://example.com/donate", "_blank");
+  const handleDonation = async () => {
+    const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+
+    // Debug: Log the Stripe API key
+    console.log("Stripe Publishable Key:", stripeKey);
+
+    // Validate the Stripe API key
+    if (!stripeKey) {
+      console.error("Stripe Publishable Key is not defined.");
+      alert("Payment system is currently unavailable. Please try again later.");
+      return;
+    }
+
+    const stripe = await loadStripe(stripeKey);
+    if (!stripe) return;
+
+    const { error } = await stripe.redirectToCheckout({
+      lineItems: [{ price: "price_1QKaP7086RkHui3Y2LV5jF2T", quantity: 1 }],
+      mode: "payment",
+      successUrl: window.location.origin,
+      cancelUrl: window.location.origin,
+    });
+
+    if (error) {
+      console.error("Error:", error);
+    }
   };
 
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.8 }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-          className="fixed inset-0 flex items-center justify-center z-10"
-        >
+    <>
+      <AnimatePresence>
+        {isVisible && (
           <motion.div
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 50, opacity: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="bg-white bg-opacity-80 backdrop-blur-md w-full max-w-2xl p-8 rounded-lg shadow-2xl"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="fixed inset-0 flex items-center justify-center z-10"
           >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-4xl font-bold text-cyan-500">
-                {activeSection}
-              </h2>
-              <button
-                onClick={toggleLanguage}
-                className="w-10 h-10 focus:outline-none"
-              >
-                <img
-                  src={
-                    language === "en"
-                      ? "/japanese_icon.svg"
-                      : "/english_icon.svg"
-                  }
-                  alt={
-                    language === "en"
-                      ? "Switch to Japanese"
-                      : "Switch to English"
-                  }
-                  className="w-full h-full"
-                />
-              </button>
-            </div>
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={language}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                className="whitespace-pre-line text-lg text-slate-700 mb-6"
-              >
-                {content[activeSection as keyof typeof content][language]}
-              </motion.p>
-            </AnimatePresence>
-            {activeSection === "Contact" && (
-              <div className="flex justify-center mb-6">
+            <motion.div
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 50, opacity: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              className="bg-white bg-opacity-80 backdrop-blur-md w-full max-w-2xl p-8 rounded-lg shadow-2xl"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-4xl font-bold text-cyan-500">
+                  {activeSection}
+                </h2>
                 <button
-                  onClick={handleSendEmail}
-                  className="focus:outline-none opacity-70 hover:opacity-100 transition-opacity duration-300"
-                >
-                  <img src="/send.svg" alt="Send Email" className="w-12 h-12" />
-                </button>
-              </div>
-            )}
-            {activeSection === "Github" && (
-              <div className="flex justify-center mb-6">
-                <button
-                  onClick={handleGithubLink}
-                  className="focus:outline-none opacity-70 hover:opacity-100 transition-opacity duration-300"
+                  onClick={toggleLanguage}
+                  className="w-10 h-10 focus:outline-none"
                 >
                   <img
-                    src="/github.svg"
-                    alt="Visit GitHub"
-                    className="w-12 h-12"
+                    src={
+                      language === "en"
+                        ? "/japanese_icon.svg"
+                        : "/english_icon.svg"
+                    }
+                    alt={
+                      language === "en"
+                        ? "Switch to Japanese"
+                        : "Switch to English"
+                    }
+                    className="w-full h-full"
                   />
                 </button>
               </div>
-            )}
-            {activeSection === "Donate" && (
-              <div className="flex justify-center mb-6">
-                <button
-                  onClick={handleDonation}
-                  className="focus:outline-none opacity-70 hover:opacity-100 transition-opacity duration-300"
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={language}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="whitespace-pre-line text-lg text-slate-700 mb-6"
                 >
-                  <img src="/donate.svg" alt="Donate" className="w-12 h-12" />
+                  {content[activeSection as keyof typeof content][language]}
+                </motion.p>
+              </AnimatePresence>
+              {activeSection === "Contact" && (
+                <div className="flex justify-center mb-6">
+                  <button
+                    onClick={handleSendEmail}
+                    className="focus:outline-none opacity-70 hover:opacity-100 transition-opacity duration-300"
+                  >
+                    <img
+                      src="/send.svg"
+                      alt="Send Email"
+                      className="w-12 h-12"
+                    />
+                  </button>
+                </div>
+              )}
+              {activeSection === "Github" && (
+                <div className="flex justify-center mb-6">
+                  <button
+                    onClick={handleGithubLink}
+                    className="focus:outline-none opacity-70 hover:opacity-100 transition-opacity duration-300"
+                  >
+                    <img
+                      src="/github.svg"
+                      alt="Visit GitHub"
+                      className="w-12 h-12"
+                    />
+                  </button>
+                </div>
+              )}
+              {activeSection === "Donate" && (
+                <div className="flex justify-center mb-6">
+                  <button
+                    onClick={handleDonation}
+                    className="focus:outline-none opacity-70 hover:opacity-100 transition-opacity duration-300"
+                  >
+                    <img src="/donate.svg" alt="Donate" className="w-12 h-12" />
+                  </button>
+                </div>
+              )}
+              <div className="flex justify-end">
+                <button
+                  className="px-4 py-2 text-slate-800 hover:text-cyan-500 transition-colors duration-300"
+                  onClick={handleClose}
+                >
+                  Close
                 </button>
               </div>
-            )}
-            <div className="flex justify-end">
-              <button
-                className="px-4 py-2 text-slate-800 hover:text-cyan-500 transition-colors duration-300"
-                onClick={handleClose}
-              >
-                Close
-              </button>
-            </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        )}
+      </AnimatePresence>
+      {/* {showDonateModal && (
+        <DonateModal isOpen={showDonateModal} onClose={() => setShowDonateModal(false)} />
+      )} */}
+    </>
   );
 }
 
