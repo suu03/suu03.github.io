@@ -4,7 +4,6 @@ import { OrbitControls, Text, shaderMaterial } from "@react-three/drei";
 import { EffectComposer, Bloom } from "@react-three/postprocessing";
 import * as THREE from "three";
 import { motion, AnimatePresence } from "framer-motion";
-import { loadStripe } from "@stripe/stripe-js";
 
 const GlowMaterial = shaderMaterial(
   { color: new THREE.Color(1, 1, 1) },
@@ -177,6 +176,18 @@ function Box(
           Make a Wish!
         </HoverableText>
         <HoverableText
+          position={[boxSize / 2.0 + 0.5, 0, 0]}
+          fontSize={0.9}
+          color="black"
+          hoverColor="#0056EB"
+          anchorX="center"
+          anchorY="middle"
+          rotation={[0, Math.PI / 2, 0]}
+          onClick={() => props.setActiveSection("Github")}
+        >
+          Github
+        </HoverableText>
+        <HoverableText
           position={[0, -boxSize / 2.1 - 0.6, 0]}
           fontSize={0.7}
           color="black"
@@ -203,7 +214,6 @@ function Box(
       </mesh>
       <mesh ref={glowRef} scale={1.2}>
         <boxGeometry args={[boxSize, boxSize, boxSize]} />
-        {/* <glowMaterial attach="material" color="#ffffff" /> */}
       </mesh>
     </group>
   );
@@ -212,46 +222,50 @@ function Box(
 function Stars() {
   const starsRef = useRef<THREE.Points>(null!);
   const [starPositions] = useState(() => {
-    const positions = new Float32Array(10000 * 3);
-    const colors = new Float32Array(10000 * 3);
-    const sizes = new Float32Array(10000);
-    for (let i = 0; i < 10000; i++) {
+    const positions = new Float32Array(15000 * 3);
+    const colors = new Float32Array(15000 * 3);
+    const sizes = new Float32Array(15000);
+    for (let i = 0; i < 15000; i++) {
       positions[i * 3] = (Math.random() - 0.5) * 100;
       positions[i * 3 + 1] = (Math.random() - 0.5) * 100;
       positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
 
       const color = new THREE.Color();
-      color.setHSL(Math.random(), 0.7, 0.9);
+      color.setHSL(Math.random(), 1, 0.9);
       colors[i * 3] = color.r;
       colors[i * 3 + 1] = color.g;
       colors[i * 3 + 2] = color.b;
 
-      sizes[i] = Math.random() * 0.5 + 0.1;
+      sizes[i] = Math.random() * 0.8 + 0.2;
     }
     return { positions, colors, sizes };
   });
 
   const starTexture = useMemo(() => {
     const canvas = document.createElement("canvas");
-    canvas.width = 32;
-    canvas.height = 32;
+    canvas.width = 128;
+    canvas.height = 128;
     const ctx = canvas.getContext("2d")!;
-    const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+    const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
     gradient.addColorStop(0, "rgba(255,255,255,1)");
+    gradient.addColorStop(0.2, "rgba(255,255,255,0.8)");
+    gradient.addColorStop(0.4, "rgba(255,255,255,0.5)");
+    gradient.addColorStop(0.6, "rgba(255,255,255,0.3)");
     gradient.addColorStop(1, "rgba(255,255,255,0)");
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 32, 32);
+    ctx.fillRect(0, 0, 128, 128);
     return new THREE.CanvasTexture(canvas);
   }, []);
 
   useFrame((state, delta) => {
-    starsRef.current.rotation.x += delta * 0.01;
-    starsRef.current.rotation.y += delta * 0.01;
+    starsRef.current.rotation.x += delta * 0.005;
+    starsRef.current.rotation.y += delta * 0.005;
 
     const time = state.clock.getElapsedTime();
     const sizes = starsRef.current.geometry.attributes.size.array;
     for (let i = 0; i < sizes.length; i++) {
-      sizes[i] = Math.sin(time + i * 100) * 0.2 + 0.3;
+      sizes[i] =
+        (Math.sin(time + i * 100) * 0.5 + 1.5) * starPositions.sizes[i];
     }
     starsRef.current.geometry.attributes.size.needsUpdate = true;
   });
@@ -279,12 +293,14 @@ function Stars() {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.1}
+        size={0.3}
         vertexColors
         transparent
         blending={THREE.AdditiveBlending}
         sizeAttenuation
         map={starTexture}
+        alphaTest={0.001}
+        depthWrite={false}
       />
     </points>
   );
@@ -370,7 +386,6 @@ function Modal({
 }) {
   const [isVisible, setIsVisible] = useState(false);
   const [language, setLanguage] = useState<"en" | "jp">("en");
-  //const [showDonateModal, setShowDonateModal] = useState(false);
 
   useEffect(() => {
     if (activeSection) {
@@ -414,141 +429,108 @@ function Modal({
     window.open("https://github.com/suu03", "_blank");
   };
 
-  const handleDonation = async () => {
-    const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
-
-    // Debug: Log the Stripe API key
-    console.log("Stripe Publishable Key:", stripeKey);
-
-    // Validate the Stripe API key
-    if (!stripeKey) {
-      console.error("Stripe Publishable Key is not defined.");
-      alert("Payment system is currently unavailable. Please try again later.");
-      return;
-    }
-
-    const stripe = await loadStripe(stripeKey);
-    if (!stripe) return;
-
-    const { error } = await stripe.redirectToCheckout({
-      lineItems: [{ price: "price_1QKaP7086RkHui3Y2LV5jF2T", quantity: 1 }],
-      mode: "payment",
-      successUrl: window.location.origin,
-      cancelUrl: window.location.origin,
-    });
-
-    if (error) {
-      console.error("Error:", error);
-    }
+  const handleDonation = () => {
+    window.open("https://example.com/donate", "_blank");
   };
 
   return (
-    <>
-      <AnimatePresence>
-        {isVisible && (
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+          className="fixed inset-0 flex items-center justify-center z-10"
+        >
           <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="fixed inset-0 flex items-center justify-center z-10"
+            initial={{ y: 50, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 50, opacity: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="bg-white bg-opacity-80 backdrop-blur-md w-full max-w-2xl p-8 rounded-lg shadow-2xl"
           >
-            <motion.div
-              initial={{ y: 50, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 50, opacity: 0 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
-              className="bg-white bg-opacity-80 backdrop-blur-md w-full max-w-2xl p-8 rounded-lg shadow-2xl"
-            >
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-4xl font-bold text-cyan-500">
-                  {activeSection}
-                </h2>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-4xl font-bold text-cyan-500">
+                {activeSection}
+              </h2>
+              <button
+                onClick={toggleLanguage}
+                className="w-10 h-10 focus:outline-none"
+              >
+                <img
+                  src={
+                    language === "en"
+                      ? "/japanese_icon.svg"
+                      : "/english_icon.svg"
+                  }
+                  alt={
+                    language === "en"
+                      ? "Switch to Japanese"
+                      : "Switch to English"
+                  }
+                  className="w-full h-full"
+                />
+              </button>
+            </div>
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={language}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="whitespace-pre-line text-lg text-slate-700 mb-6"
+              >
+                {content[activeSection as keyof typeof content][language]}
+              </motion.p>
+            </AnimatePresence>
+            {activeSection === "Contact" && (
+              <div className="flex justify-center mb-6">
                 <button
-                  onClick={toggleLanguage}
-                  className="w-10 h-10 focus:outline-none"
+                  onClick={handleSendEmail}
+                  className="focus:outline-none opacity-70 hover:opacity-100 transition-opacity duration-300"
+                >
+                  <img src="/send.svg" alt="Send Email" className="w-12 h-12" />
+                </button>
+              </div>
+            )}
+            {activeSection === "Github" && (
+              <div className="flex justify-center mb-6">
+                <button
+                  onClick={handleGithubLink}
+                  className="focus:outline-none opacity-70 hover:opacity-100 transition-opacity duration-300"
                 >
                   <img
-                    src={
-                      language === "en"
-                        ? "/japanese_icon.svg"
-                        : "/english_icon.svg"
-                    }
-                    alt={
-                      language === "en"
-                        ? "Switch to Japanese"
-                        : "Switch to English"
-                    }
-                    className="w-full h-full"
+                    src="/github.svg"
+                    alt="Visit GitHub"
+                    className="w-12 h-12"
                   />
                 </button>
               </div>
-              <AnimatePresence mode="wait">
-                <motion.p
-                  key={language}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                  className="whitespace-pre-line text-lg text-slate-700 mb-6"
-                >
-                  {content[activeSection as keyof typeof content][language]}
-                </motion.p>
-              </AnimatePresence>
-              {activeSection === "Contact" && (
-                <div className="flex justify-center mb-6">
-                  <button
-                    onClick={handleSendEmail}
-                    className="focus:outline-none opacity-70 hover:opacity-100 transition-opacity duration-300"
-                  >
-                    <img
-                      src="/send.svg"
-                      alt="Send Email"
-                      className="w-12 h-12"
-                    />
-                  </button>
-                </div>
-              )}
-              {activeSection === "Github" && (
-                <div className="flex justify-center mb-6">
-                  <button
-                    onClick={handleGithubLink}
-                    className="focus:outline-none opacity-70 hover:opacity-100 transition-opacity duration-300"
-                  >
-                    <img
-                      src="/github.svg"
-                      alt="Visit GitHub"
-                      className="w-12 h-12"
-                    />
-                  </button>
-                </div>
-              )}
-              {activeSection === "Donate" && (
-                <div className="flex justify-center mb-6">
-                  <button
-                    onClick={handleDonation}
-                    className="focus:outline-none opacity-70 hover:opacity-100 transition-opacity duration-300"
-                  >
-                    <img src="/donate.svg" alt="Donate" className="w-12 h-12" />
-                  </button>
-                </div>
-              )}
-              <div className="flex justify-end">
+            )}
+            {activeSection === "Donate" && (
+              <div className="flex justify-center mb-6">
                 <button
-                  className="px-4 py-2 text-slate-800 hover:text-cyan-500 transition-colors duration-300"
-                  onClick={handleClose}
+                  onClick={handleDonation}
+                  className="focus:outline-none opacity-70 hover:opacity-100 transition-opacity duration-300"
                 >
-                  Close
+                  <img src="/donate.svg" alt="Donate" className="w-12 h-12" />
                 </button>
               </div>
-            </motion.div>
+            )}
+            <div className="flex justify-end">
+              <button
+                className="px-4 py-2 text-slate-800 hover:text-cyan-500 transition-colors duration-300"
+                onClick={handleClose}
+              >
+                Close
+              </button>
+            </div>
           </motion.div>
-        )}
-      </AnimatePresence>
-      {/* {showDonateModal && (
-        <DonateModal isOpen={showDonateModal} onClose={() => setShowDonateModal(false)} />
-      )} */}
-    </>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
