@@ -222,50 +222,46 @@ function Box(
 function Stars() {
   const starsRef = useRef<THREE.Points>(null!);
   const [starPositions] = useState(() => {
-    const positions = new Float32Array(15000 * 3);
-    const colors = new Float32Array(15000 * 3);
-    const sizes = new Float32Array(15000);
-    for (let i = 0; i < 15000; i++) {
+    const positions = new Float32Array(10000 * 3);
+    const colors = new Float32Array(10000 * 3);
+    const sizes = new Float32Array(10000);
+    for (let i = 0; i < 10000; i++) {
       positions[i * 3] = (Math.random() - 0.5) * 100;
       positions[i * 3 + 1] = (Math.random() - 0.5) * 100;
       positions[i * 3 + 2] = (Math.random() - 0.5) * 100;
 
       const color = new THREE.Color();
-      color.setHSL(Math.random(), 1, 0.9);
+      color.setHSL(Math.random(), 0.7, 0.9);
       colors[i * 3] = color.r;
       colors[i * 3 + 1] = color.g;
       colors[i * 3 + 2] = color.b;
 
-      sizes[i] = Math.random() * 0.8 + 0.2;
+      sizes[i] = Math.random() * 0.5 + 0.1;
     }
     return { positions, colors, sizes };
   });
 
   const starTexture = useMemo(() => {
     const canvas = document.createElement("canvas");
-    canvas.width = 128;
-    canvas.height = 128;
+    canvas.width = 32;
+    canvas.height = 32;
     const ctx = canvas.getContext("2d")!;
-    const gradient = ctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
     gradient.addColorStop(0, "rgba(255,255,255,1)");
-    gradient.addColorStop(0.2, "rgba(255,255,255,0.8)");
-    gradient.addColorStop(0.4, "rgba(255,255,255,0.5)");
-    gradient.addColorStop(0.6, "rgba(255,255,255,0.3)");
     gradient.addColorStop(1, "rgba(255,255,255,0)");
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 128, 128);
+    ctx.fillRect(0, 0, 32, 32);
     return new THREE.CanvasTexture(canvas);
   }, []);
 
   useFrame((state, delta) => {
-    starsRef.current.rotation.x += delta * 0.005;
-    starsRef.current.rotation.y += delta * 0.005;
+    starsRef.current.rotation.x += delta * 0.01;
+    starsRef.current.rotation.y += delta * 0.01;
 
     const time = state.clock.getElapsedTime();
     const sizes = starsRef.current.geometry.attributes.size.array;
     for (let i = 0; i < sizes.length; i++) {
-      sizes[i] =
-        (Math.sin(time + i * 100) * 0.5 + 1.5) * starPositions.sizes[i];
+      sizes[i] = Math.sin(time + i * 100) * 0.2 + 0.3;
     }
     starsRef.current.geometry.attributes.size.needsUpdate = true;
   });
@@ -293,14 +289,12 @@ function Stars() {
         />
       </bufferGeometry>
       <pointsMaterial
-        size={0.3}
+        size={0.1}
         vertexColors
         transparent
         blending={THREE.AdditiveBlending}
         sizeAttenuation
         map={starTexture}
-        alphaTest={0.001}
-        depthWrite={false}
       />
     </points>
   );
