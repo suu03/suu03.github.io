@@ -1,4 +1,4 @@
-// import React from "react";
+import React from "react";
 import StarryPortfolio from "./components/StarryPortfolio";
 
 function App() {
