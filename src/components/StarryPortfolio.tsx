@@ -124,7 +124,7 @@ function Box(
           />
         ))}
         <HoverableText
-          position={[0, 0, boxSize / 2 + 0.6]}
+          position={[0, 0, boxSize / 2 + 0.5]}
           fontSize={0.7}
           color="#00AEE1"
           hoverColor="#00AEE1"
@@ -135,20 +135,8 @@ function Box(
           Suu portfolio
         </HoverableText>
         <HoverableText
-          position={[boxSize / 2 + 0.55, 0, 0]}
-          fontSize={0.9}
-          color="black"
-          hoverColor="#0056EB"
-          anchorX="center"
-          anchorY="middle"
-          rotation={[0, Math.PI / 2, 0]}
-          onClick={() => props.setActiveSection("Github")}
-        >
-          Github
-        </HoverableText>
-        <HoverableText
-          position={[0, boxSize / 2 + 0.61, 0]}
-          fontSize={0.9}
+          position={[0, boxSize / 2 + 0.63, 0]}
+          fontSize={0.8}
           color="black"
           hoverColor="#146C8D"
           anchorX="center"
@@ -159,8 +147,8 @@ function Box(
           Contact
         </HoverableText>
         <HoverableText
-          position={[0, 0, -boxSize / 2 - 0.6]}
-          fontSize={0.7}
+          position={[0, 0, -boxSize / 2 - 0.62]}
+          fontSize={0.65}
           color={props.meteorActive ? "gray" : "black"}
           hoverColor={props.meteorActive ? "gray" : "#3068A8"}
           anchorX="center"
@@ -176,8 +164,8 @@ function Box(
           Make a Wish!
         </HoverableText>
         <HoverableText
-          position={[boxSize / 2 + 0.55, 0, 0]}
-          fontSize={0.9}
+          position={[boxSize / 2 + 0.6, 0, 0]}
+          fontSize={0.85}
           color="black"
           hoverColor="#0056EB"
           anchorX="center"
@@ -188,8 +176,8 @@ function Box(
           Github
         </HoverableText>
         <HoverableText
-          position={[0, -boxSize / 2 - 0.61, 0]}
-          fontSize={0.7}
+          position={[0, -boxSize / 2 - 0.63, 0]}
+          fontSize={0.65}
           color="black"
           hoverColor="#3567BF"
           anchorX="center"
@@ -346,15 +334,15 @@ function Meteor({ active }: { active: boolean }) {
         <sphereGeometry args={[0.3, 32, 32]} />
         <meshStandardMaterial
           color={new THREE.Color(1, 1 - heat, 1 - heat)}
-          emissive={new THREE.Color(1, 0.6, 0)}
+          emissive={new THREE.Color(3, 0.6, 0)}
           emissiveIntensity={heat * 2}
         />
       </mesh>
       <pointLight
         position={meteorRef.current ? meteorRef.current.position : [0, 0, 0]}
-        intensity={2 * heat}
+        intensity={1 * heat}
         distance={10}
-        color="#FFA500"
+        color="#fff719"
       />
       {trail
         .slice()
@@ -365,10 +353,10 @@ function Meteor({ active }: { active: boolean }) {
               args={[0.4 * Math.pow(1 - index / trail.length, 2), 16, 16]}
             />
             <meshStandardMaterial
-              color="#FFFFFF"
+              color="#f77511"
               transparent
               opacity={0.8 * (1 - index / trail.length)}
-              emissive="#CF0808"
+              emissive="#f77511"
               emissiveIntensity={0.5 * (1 - index / trail.length)}
             />
           </mesh>
@@ -430,7 +418,7 @@ function Modal({
   };
 
   const handleDonation = () => {
-    window.open("https://donate.stripe.com/test_dR603Y4Sv6Uf8I8288", "_blank");
+    window.open("https://donate.stripe.com/test_aEU7uS89m0Itb605kk", "_blank");
   };
 
   return (
@@ -561,7 +549,7 @@ export default function StarryPortfolio() {
         <Meteor active={meteorActive} />
         <OrbitControls enableZoom={false} />
         <EffectComposer>
-          <Bloom luminanceThreshold={0} luminanceSmoothing={0.9} height={300} />
+          <Bloom luminanceThreshold={0} luminanceSmoothing={1.5} height={300} />
         </EffectComposer>
       </Canvas>
       <Modal
